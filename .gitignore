@@ -44,6 +44,7 @@ next-env.d.ts
 __pycache__/
 *.pyc
 *.session
+*.session-journal
 downloads/
 
 /src/generated/prisma
