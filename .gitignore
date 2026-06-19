@@ -42,7 +42,10 @@ next-env.d.ts
 
 /src/generated/prisma
 
-# python
+# python / telethon
 __pycache__/
 *.pyc
 *.pyo
+*.session
+*.session-journal
+downloads/
