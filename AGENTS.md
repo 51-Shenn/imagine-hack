@@ -40,6 +40,10 @@ Required vars: `DATABASE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETT
 
 **`.env` contains live credentials** (Telegram bot token, Google OAuth secrets) — never log or commit them.
 
+## Workflow
+
+- **Never push directly to `main`** — always create a PR from a feature branch.
+
 ## Caveats
 
 - No test framework installed — skip any test commands
