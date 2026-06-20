@@ -2,7 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase";
-import type { OperationsCommandInput, OperationsSnapshot } from "@/lib/operations-types";
+import { taskStates, type OperationsCommandInput, type OperationsSnapshot, type TaskState } from "@/lib/operations-types";
+import { waitForCommand, type CommandStatusResponse } from "@/lib/command-lifecycle";
 
 type OperationsContextValue = {
   snapshot: OperationsSnapshot;
@@ -67,7 +68,7 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
     const sb = getSupabaseBrowser();
     if (!sb) return () => { clearTimeout(initialRefresh); clearInterval(pollingFallback); };
     const channel = sb.channel("syncfield-operations");
-    for (const table of ["projects", "tasks", "subtasks", "technicians", "task_events", "alerts", "processed_messages", "task_commands"]) {
+    for (const table of ["projects", "tasks", "subtasks", "technicians", "task_events", "alerts", "processed_messages"]) {
       channel.on("postgres_changes", { event: "*", schema: "public", table }, scheduleRefresh);
     }
     channel.subscribe((status) => {
@@ -86,12 +87,35 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
     // Realtime CDC will trigger refresh when the DB change propagates.
   }, []);
 
+  const issueCommand = useCallback(async (command: OperationsCommandInput) => {
+    const requestedState = command.payload?.state;
+    const targetState = typeof requestedState === "string" && taskStates.some((state) => state === requestedState)
+      ? requestedState as TaskState
+      : null;
+
+    if (command.commandType === "task.transition" && command.taskId && targetState) {
+      setSnapshot((current) => ({
+        ...current,
+        tasks: current.tasks.map((task) => task.id === command.taskId ? { ...task, state: targetState } : task),
+      }));
+    }
+
+    try {
+      const result = await requestJson("/api/operations/commands", { method: "POST", body: JSON.stringify(command) }) as { commandId: string };
+      await waitForCommand(
+        () => requestJson(`/api/operations/commands/${result.commandId}`, { cache: "no-store" }) as Promise<CommandStatusResponse>,
+      );
+      await refresh();
+      return result.commandId;
+    } catch (reason) {
+      await refresh();
+      throw reason;
+    }
+  }, [refresh]);
+
   const value = useMemo<OperationsContextValue>(() => ({
     snapshot, loading, isInitializing: loading && !initialized, error, refresh,
-    issueCommand: async (command) => {
-      const result = await requestJson("/api/operations/commands", { method: "POST", body: JSON.stringify(command) }) as { commandId: string };
-      return result.commandId;
-    },
+    issueCommand,
     createProject: (project) => mutate("/api/projects", "POST", project),
     updateProject: (id, project) => mutate(`/api/projects/${id}`, "PATCH", project),
     deleteProject: (id) => mutate(`/api/projects/${id}`, "DELETE"),
@@ -101,7 +125,7 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
     createTechnician: (technician) => mutate("/api/technicians", "POST", technician),
     updateTechnician: (id, technician) => mutate(`/api/technicians/${id}`, "PATCH", technician),
     deleteTechnician: (id) => mutate(`/api/technicians/${id}`, "DELETE"),
-  }), [snapshot, loading, error, refresh, mutate]);
+  }), [snapshot, loading, initialized, error, refresh, issueCommand, mutate]);
 
   return <OperationsContext.Provider value={value}>{children}</OperationsContext.Provider>;
 }

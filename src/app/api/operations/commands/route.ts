@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRequiredSession } from "@/lib/api-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
-import type { OperationsCommandInput } from "@/lib/operations-types";
+import { taskStates, type OperationsCommandInput } from "@/lib/operations-types";
 
 const allowedCommands = new Set<OperationsCommandInput["commandType"]>([
   "task.create", "task.update", "task.delete", "task.transition", "task.assign",
@@ -18,6 +18,13 @@ export async function POST(request: Request) {
   }
   if (body.commandType.startsWith("task.") && body.commandType !== "task.create" && !body.taskId) {
     return NextResponse.json({ error: "taskId is required" }, { status: 400 });
+  }
+  if (body.commandType === "task.create") {
+    const state = body.payload?.state;
+    if (!body.projectId) return NextResponse.json({ error: "projectId is required" }, { status: 400 });
+    if (state !== undefined && (typeof state !== "string" || !taskStates.some((taskState) => taskState === state))) {
+      return NextResponse.json({ error: "Invalid task state" }, { status: 400 });
+    }
   }
 
   const sb = getSupabaseAdmin();

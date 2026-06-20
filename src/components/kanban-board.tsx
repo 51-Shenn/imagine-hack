@@ -5,6 +5,7 @@ import { IconCalendarMonth, IconGripVertical, IconPencil, IconPlus, IconTrash } 
 import { useOperations } from "@/components/operations-provider";
 import { legalTaskTransitions, taskStates, type OperationsTask, type TaskState } from "@/lib/operations-types";
 import { Avatar, Badge, Button, Card, CardContent, Dialog, Input, Label, Select } from "@/components/ui";
+import { formatTaskTiming } from "@/lib/task-timing";
 import { cn } from "@/lib/utils";
 
 const stateStyle: Record<TaskState, { label: string; dot: string }> = {
@@ -30,7 +31,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [activeColumn, setActiveColumn] = useState<TaskState | null>(null);
   const [editing, setEditing] = useState<OperationsTask | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [creatingState, setCreatingState] = useState<TaskState | null>(null);
   const [draft, setDraft] = useState<TaskDraft>(emptyDraft());
   const [subtaskTitle, setSubtaskTitle] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
@@ -50,22 +51,30 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
   async function saveTask() {
     if (!draft.title.trim()) return;
-    if (!editing) {
-      await issueCommand({ commandType: "task.create", projectId, payload: { ...draft, state: "READY" } });
-    } else {
-      await issueCommand({ commandType: "task.update", taskId: editing.id, payload: {
-        title: draft.title, priority: draft.priority, deadline: draft.deadline || null,
-        estimatedDurationHours: draft.estimatedDurationHours,
-      } });
-      if (draft.assigneeId !== editing.assigneeId) {
-        await issueCommand({ commandType: "task.assign", taskId: editing.id, payload: { technicianId: draft.assigneeId || null } });
+    try {
+      if (!editing) {
+        await issueCommand({ commandType: "task.create", projectId, payload: { ...draft, state: creatingState ?? "READY" } });
+      } else {
+        await issueCommand({ commandType: "task.update", taskId: editing.id, payload: {
+          title: draft.title, priority: draft.priority, deadline: draft.deadline || null,
+          estimatedDurationHours: draft.estimatedDurationHours,
+        } });
+        if (draft.assigneeId !== editing.assigneeId) {
+          await issueCommand({ commandType: "task.assign", taskId: editing.id, payload: { technicianId: draft.assigneeId || null } });
+        }
       }
+      setEditing(null); setCreatingState(null); setDraft(emptyDraft()); setMessage("Task command queued.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to queue task command");
     }
-    setEditing(null); setCreating(false); setDraft(emptyDraft()); setMessage("Task command queued.");
+  }
+
+  function openCreate(state: TaskState) {
+    setCreatingState(state); setEditing(null); setDraft(emptyDraft());
   }
 
   function openEdit(task: OperationsTask) {
-    setEditing(task); setCreating(false);
+    setEditing(task); setCreatingState(null);
     setDraft({ title: task.title, priority: task.priority, assigneeId: task.assigneeId, deadline: task.deadline?.slice(0, 10) ?? "", estimatedDurationHours: task.estimatedDurationHours });
   }
 
@@ -93,7 +102,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
         {taskStates.map((state) => {
           const columnTasks = tasks.filter((task) => task.state === state);
           return <div key={state} onDragOver={(event) => { event.preventDefault(); setActiveColumn(state); }} onDragLeave={() => setActiveColumn(null)} onDrop={(event) => drop(event, state)} className={cn("min-h-[420px] rounded-xl border border-transparent bg-slate-100/70 p-3", activeColumn === state && "border-orange-300 bg-orange-50/70")}>
-            <div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-2"><span className={cn("size-2 rounded-full", stateStyle[state].dot)} /><h3 className="text-sm font-semibold text-slate-800">{stateStyle[state].label}</h3><span className="text-xs text-slate-400">{columnTasks.length}</span></div>{state === "READY" && <button onClick={() => { setCreating(true); setEditing(null); setDraft(emptyDraft()); }} aria-label="Add task" className="rounded p-1 text-slate-400 hover:bg-white hover:text-orange-600"><IconPlus className="size-4" /></button>}</div>
+            <div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-2"><span className={cn("size-2 rounded-full", stateStyle[state].dot)} /><h3 className="text-sm font-semibold text-slate-800">{stateStyle[state].label}</h3><span className="text-xs text-slate-400">{columnTasks.length}</span></div><button onClick={() => openCreate(state)} aria-label={`Add task to ${stateStyle[state].label}`} className="rounded p-1 text-slate-400 hover:bg-white hover:text-orange-600"><IconPlus className="size-4" /></button></div>
             <div className="space-y-3">{columnTasks.map((task) => {
               const assignee = snapshot.technicians.find((member) => member.id === task.assigneeId);
               const checklist = snapshot.subtasks.filter((item) => item.taskId === task.id);
@@ -103,7 +112,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
                 {task.deadline && <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500"><IconCalendarMonth className="size-3" />{new Date(task.deadline).toLocaleDateString()}</p>}
                 {checklist.length > 0 && <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">{checklist.map((item) => <div key={item.id} className="flex items-center gap-2 text-xs"><button onClick={() => void updateSubtask(item.id, { status: item.status === "done" ? "todo" : "done" })} className={cn("size-2 rounded-full", item.status === "done" ? "bg-emerald-500" : "bg-slate-300")} /><span className={cn("min-w-0 flex-1", item.status === "done" && "text-slate-400 line-through")}>{item.title}</span><button onClick={() => void deleteSubtask(item.id)} className="text-slate-300 hover:text-red-500"><IconTrash className="size-3" /></button></div>)}</div>}
                 <div className="mt-3 flex gap-1"><Input value={subtaskTitle[task.id] ?? ""} onChange={(event) => setSubtaskTitle((current) => ({ ...current, [task.id]: event.target.value }))} onKeyDown={(event) => { if (event.key === "Enter") void addChecklist(task.id); }} placeholder="Add checklist item" className="h-7 text-xs" /><Button size="sm" variant="ghost" onClick={() => void addChecklist(task.id)}><IconPlus className="size-3" /></Button></div>
-                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-[10px] text-slate-400">{task.etaConfidence} ETA</span>{assignee ? <div className="flex items-center gap-1.5"><Avatar name={assignee.name} size="sm" /><span className="max-w-20 truncate text-[10px] text-slate-500">{assignee.name}</span></div> : <span className="text-[10px] text-slate-400">Unassigned</span>}</div>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-[10px] text-slate-400">{formatTaskTiming(task)}</span>{assignee ? <div className="flex items-center gap-1.5"><Avatar name={assignee.name} size="sm" /><span className="max-w-20 truncate text-[10px] text-slate-500">{assignee.name}</span></div> : <span className="text-[10px] text-slate-400">Unassigned</span>}</div>
               </CardContent></Card>;
             })}</div>
           </div>;
@@ -111,8 +120,8 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
       </div>
     </div>
 
-    <Dialog open={creating || Boolean(editing)} onOpenChange={(open) => { if (!open) { setCreating(false); setEditing(null); } }} title={editing ? "Edit task" : "Create task"} description="Changes are validated and processed by the operations worker.">
-      <div className="space-y-4"><div><Label>Task title</Label><Input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></div><div className="grid grid-cols-2 gap-4"><div><Label>Priority</Label><Select value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as TaskDraft["priority"] })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div><div><Label>Duration (hours)</Label><Input type="number" min={0.5} step={0.5} value={draft.estimatedDurationHours} onChange={(event) => setDraft({ ...draft, estimatedDurationHours: Number(event.target.value) })} /></div></div><div className="grid grid-cols-2 gap-4"><div><Label>Assignee</Label><Select value={draft.assigneeId} onChange={(event) => setDraft({ ...draft, assigneeId: event.target.value })}><option value="">Unassigned</option>{snapshot.technicians.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</Select></div><div><Label>Deadline</Label><Input type="date" value={draft.deadline} onChange={(event) => setDraft({ ...draft, deadline: event.target.value })} /></div></div><div className="flex justify-end gap-2"><Button variant="outline" onClick={() => { setCreating(false); setEditing(null); }}>Cancel</Button><Button onClick={() => void saveTask()}>Queue {editing ? "update" : "task"}</Button></div></div>
+    <Dialog open={Boolean(creatingState || editing)} onOpenChange={(open) => { if (!open) { setCreatingState(null); setEditing(null); } }} title={editing ? "Edit task" : `Create ${creatingState ? stateStyle[creatingState].label.toLowerCase() : ""} task`} description={editing ? "Changes are validated and processed by the operations worker." : `The task will be added to the ${creatingState ? stateStyle[creatingState].label : "selected"} column.`}>
+      <div className="space-y-4"><div><Label>Task title</Label><Input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></div><div className="grid grid-cols-2 gap-4"><div><Label>Priority</Label><Select value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value as TaskDraft["priority"] })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div><div><Label>Duration (hours)</Label><Input type="number" min={0.5} step={0.5} value={draft.estimatedDurationHours} onChange={(event) => setDraft({ ...draft, estimatedDurationHours: Number(event.target.value) })} /></div></div><div className="grid grid-cols-2 gap-4"><div><Label>Assignee</Label><Select value={draft.assigneeId} onChange={(event) => setDraft({ ...draft, assigneeId: event.target.value })}><option value="">Unassigned</option>{snapshot.technicians.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</Select></div><div><Label>Deadline</Label><Input type="date" value={draft.deadline} onChange={(event) => setDraft({ ...draft, deadline: event.target.value })} /></div></div><div className="flex justify-end gap-2"><Button variant="outline" onClick={() => { setCreatingState(null); setEditing(null); }}>Cancel</Button><Button onClick={() => void saveTask()}>Queue {editing ? "update" : "task"}</Button></div></div>
     </Dialog>
   </>;
 }
