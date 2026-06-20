@@ -84,7 +84,7 @@ export function LandingPage() {
   return <div className="min-h-screen overflow-hidden bg-[#f8fafc] text-slate-950">
     <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
       <nav className="mx-auto flex h-16 max-w-7xl items-center px-5 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5"><Image src="/icon.svg" alt="SyncField" width={38} height={38} /><span className="text-lg font-bold tracking-tight text-[#132238]">Sync<span className="text-orange-500">Field</span></span></Link>
+        <a href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="flex items-center gap-2.5"><Image src="/icon.svg" alt="SyncField" width={38} height={38} /><span className="text-lg font-bold tracking-tight text-[#132238]">Sync<span className="text-orange-500">Field</span></span></a>
         <div className="ml-auto hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex"><a href="#platform" className="hover:text-slate-950">Platform</a><a href="#workflow" className="hover:text-slate-950">How it works</a><a href="#security" className="hover:text-slate-950">Security</a><LandingAction compact /></div>
         <button className="ml-auto rounded-lg p-2 text-slate-700 md:hidden" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle navigation">{mobileOpen ? <IconX /> : <IconMenu2 />}</button>
       </nav>
