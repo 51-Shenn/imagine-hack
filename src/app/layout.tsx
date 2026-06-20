@@ -5,5 +5,5 @@ import "./globals.css";
 export const metadata: Metadata = { title: { default: "SyncField", template: "%s | SyncField" }, description: "Construction operations, synchronized." };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><RootShell>{children}</RootShell></body></html>;
+  return <html lang="en" data-scroll-behavior="smooth"><body><RootShell>{children}</RootShell></body></html>;
 }

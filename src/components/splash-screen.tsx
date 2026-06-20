@@ -22,8 +22,8 @@ export function SplashScreen({ href, onDone }: { href: string; onDone?: () => vo
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 bg-[#132238] transition-opacity duration-500" style={{ opacity: fadeIn ? 1 : 0 }}>
-      <img src="/syncfield.svg" alt="SyncField" className="h-40 w-auto animate-pulse" />
-      <p className="text-sm font-medium text-slate-400">Setting up your workspace…</p>
+      <img src="/syncfield.svg" alt="SyncField" className="h-100 w-auto animate-pulse" />
+      <p className="text-sm font-medium">Setting up your workspace…</p>
     </div>
   );
 }
