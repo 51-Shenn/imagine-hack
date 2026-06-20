@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { CalendarClock, ClipboardCheck, HardHat, MoreHorizontal, TriangleAlert, Users } from "lucide-react";
 import { activities, auditLogs as initialLogs, projects, siteReports, tasks, teamMembers } from "@/lib/mock-data";
-import { Avatar, Badge, Button, Card, CardContent, Progress } from "@/components/ui";
+import { Avatar, Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Progress } from "@/components/ui";
 import { StatCard } from "@/components/page-elements";
 import { authClient } from "@/lib/auth-client";
+import { PortfolioPulseChart, TaskStatusChart } from "@/components/charts";
 
 export function ControlCentreView() {
   const { data: session } = authClient.useSession();
@@ -28,18 +29,40 @@ export function ControlCentreView() {
     </div>
 
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatCard label="Active projects" value={String(activeProjects)} trend="+1 this month" icon={<HardHat className="size-5" />} />
-      <StatCard label="Tasks due this week" value={String(pendingTasks)} trend="6 completed" icon={<CalendarClock className="size-5" />} accent="blue" />
-      <StatCard label="Open issues" value={String(openIssues)} trend={openIssues > 0 ? "needs attention" : "all clear"} icon={<TriangleAlert className="size-5" />} accent={openIssues > 0 ? "violet" : "emerald"} />
-      <StatCard label="Crew on site" value={String(totalCrew)} trend="active today" icon={<Users className="size-5" />} accent="emerald" />
+      {[
+        <StatCard key="projects" label="Active projects" value={String(activeProjects)} trend="+1 this month" icon={<HardHat className="size-5" />} />,
+        <StatCard key="tasks" label="Tasks due this week" value={String(pendingTasks)} trend="6 completed" icon={<CalendarClock className="size-5" />} accent="blue" />,
+        <StatCard key="issues" label="Open issues" value={String(openIssues)} trend={openIssues > 0 ? "needs attention" : "all clear"} icon={<TriangleAlert className="size-5" />} accent={openIssues > 0 ? "violet" : "emerald"} />,
+        <StatCard key="crew" label="Crew on site" value={String(totalCrew)} trend="active today" icon={<Users className="size-5" />} accent="emerald" />,
+      ].map((card, index) => <div key={index} className="dashboard-rise" style={{ animationDelay: `${index * 70}ms` }}>{card}</div>)}
+    </section>
+
+    <section className="mt-6 grid gap-6 xl:grid-cols-[1.6fr_1fr]">
+      <Card className="overflow-hidden">
+        <CardHeader>
+          <div>
+            <CardTitle>Portfolio pulse</CardTitle>
+            <CardDescription className="mt-1">Planned versus actual completion across active projects</CardDescription>
+          </div>
+          <Badge className="bg-emerald-50 text-emerald-700 ring-emerald-600/15">On track</Badge>
+        </CardHeader>
+        <CardContent className="pt-3"><PortfolioPulseChart /></CardContent>
+      </Card>
+
+      <Card className="overflow-hidden">
+        <CardHeader>
+          <div>
+            <CardTitle>Task distribution</CardTitle>
+            <CardDescription className="mt-1">Current workflow status across every project</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-3"><TaskStatusChart /></CardContent>
+      </Card>
     </section>
 
     <section className="mt-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
       <Card>
-        <div className="p-5 pb-2">
-          <h3 className="font-semibold text-slate-950">Project progress</h3>
-          <p className="mt-1 text-xs text-slate-500">Live progress across active sites</p>
-        </div>
+        <CardHeader><div><CardTitle>Project progress</CardTitle><CardDescription className="mt-1">Live progress across active sites</CardDescription></div></CardHeader>
         <CardContent className="space-y-5 pt-3">
           {active.map(project => (
             <div key={project.id} className="group grid gap-3 rounded-xl border border-slate-100 p-4 transition-colors hover:bg-slate-50/70 sm:grid-cols-[1fr_150px_44px] sm:items-center">
@@ -65,10 +88,7 @@ export function ControlCentreView() {
       </Card>
 
       <Card>
-        <div className="p-5 pb-2">
-          <h3 className="font-semibold text-slate-950">Upcoming deadlines</h3>
-          <p className="mt-1 text-xs text-slate-500">Next 10 days</p>
-        </div>
+        <CardHeader><div><CardTitle>Upcoming deadlines</CardTitle><CardDescription className="mt-1">Next 10 days</CardDescription></div></CardHeader>
         <CardContent className="space-y-1 pt-3">
           {tasks.filter(t => t.status !== "done").slice(0, 6).map((task, i) => {
             const project = projects.find(p => p.id === task.projectId)!;
@@ -95,10 +115,7 @@ export function ControlCentreView() {
 
     <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
       <Card>
-        <div className="p-5 pb-2">
-          <h3 className="font-semibold text-slate-950">Recent activity</h3>
-          <p className="mt-1 text-xs text-slate-500">Updates from your team</p>
-        </div>
+        <CardHeader><div><CardTitle>Recent activity</CardTitle><CardDescription className="mt-1">Updates from your team</CardDescription></div></CardHeader>
         <CardContent className="pt-3">
           {activities.map((item, i) => (
             <div key={i} className="relative flex gap-3 pb-5 last:pb-0">
@@ -114,10 +131,7 @@ export function ControlCentreView() {
       </Card>
 
       <Card>
-        <div className="p-5 pb-2">
-          <h3 className="font-semibold text-slate-950">Audit trail</h3>
-          <p className="mt-1 text-xs text-slate-500">Recent CRUD actions across the platform</p>
-        </div>
+        <CardHeader><div><CardTitle>Audit trail</CardTitle><CardDescription className="mt-1">Recent CRUD actions across the platform</CardDescription></div></CardHeader>
         <CardContent className="space-y-2 pt-3">
           {logs.slice(0, 8).map(log => (
             <div key={log.id} className="flex items-start gap-3 rounded-lg border border-slate-100 p-2.5">
