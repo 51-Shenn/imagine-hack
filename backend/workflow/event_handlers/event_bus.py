@@ -57,31 +57,35 @@ class RealtimeEventBusListener:
     Subscribes to Supabase Realtime WebSocket CDC streams and routes
     payloads into the active Event Bus router.
 
-    Runs its own thread because supabase-py's Realtime client is
-    synchronous and blocking — the Telethon client runs on the main
-    async event loop and the two must not block each other.
+    Uses the async Supabase client because realtime-py only supports async.
     """
 
-    def __init__(self, bus: SupabaseEventBus):
+    def __init__(self, bus: SupabaseEventBus, async_sb=None):
         self.bus = bus
+        self.async_sb = async_sb
         self.channel = None
-        self._thread: threading.Thread | None = None
 
     def _on_postgres_change(self, payload: dict) -> None:
         self.bus.handle_db_change(payload)
 
-    def start(self) -> None:
-        self.channel = self.bus.sb.channel("tasks_realtime_sync")
+    async def start(self) -> None:
+        self.channel = self.async_sb.channel("tasks_realtime_sync")
         self.channel.on(
             "postgres_changes",
             {"event": "UPDATE", "schema": "public", "table": "tasks"},
             self._on_postgres_change,
         )
-        self.channel.subscribe()
+        await self.channel.subscribe()
         print("[EventBus] Subscribed to Supabase Realtime on table 'tasks'")
 
-    def stop(self) -> None:
+    def start_sync(self) -> None:
+        loop = asyncio.new_event_loop()
+        t = threading.Thread(target=loop.run_forever, daemon=True)
+        t.start()
+        asyncio.run_coroutine_threadsafe(self.start(), loop)
+
+    async def stop(self) -> None:
         if self.channel:
-            self.bus.sb.remove_channel(self.channel)
+            await self.async_sb.remove_channel(self.channel)
             self.channel = None
             print("[EventBus] Unsubscribed from Realtime")
