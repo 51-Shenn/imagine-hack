@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { CalendarClock, ClipboardCheck, HardHat, MoreHorizontal, TriangleAlert, Users } from "lucide-react";
 import { activities, auditLogs as initialLogs, projects, siteReports, tasks, teamMembers } from "@/lib/mock-data";
 import { Avatar, Badge, Button, Card, CardContent, Progress } from "@/components/ui";
 import { StatCard } from "@/components/page-elements";
+import { authClient } from "@/lib/auth-client";
 
 export function ControlCentreView() {
-  const [logs, setLogs] = useState(initialLogs);
+  const { data: session } = authClient.useSession();
+  const [logs] = useState(initialLogs);
+  const userName = session?.user.name?.trim() || session?.user.email?.split("@")[0] || "there";
   const openIssues = siteReports.filter(r => r.status === "open").length;
   const activeProjects = projects.filter(p => p.status === "in_progress").length;
   const totalCrew = teamMembers.filter(m => m.status === "active").length;
@@ -18,7 +21,7 @@ export function ControlCentreView() {
     <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p className="mb-1 text-xs font-semibold uppercase tracking-[.15em] text-orange-600">Friday, June 20</p>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Good morning, Marcus</h2>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Good morning, <span className="text-orange-600">{userName}</span></h2>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">Here&apos;s what&apos;s happening across your jobsites today.</p>
       </div>
       <Button><ClipboardCheck className="size-4" />Create report</Button>
