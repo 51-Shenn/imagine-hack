@@ -209,7 +209,6 @@ export const auditLogs: AuditLog[] = [
   { id:"al2", action:"updated", entity:"worker", entityId:"tm5", entityName:"Noah Williams", performedBy:"Marcus Chen", timestamp:"Jun 16, 2026 11:32", details:"Status changed to on_leave." },
   { id:"al3", action:"created", entity:"report", entityId:"sr3", entityName:"Building C foundation pour", performedBy:"Priya Shah", timestamp:"Jun 17, 2026 08:05", details:"Site update report created." },
   { id:"al4", action:"updated", entity:"project", entityId:"oakwood", entityName:"Oakwood Residences", performedBy:"Elena Rodriguez", timestamp:"Jun 18, 2026 14:20", details:"Progress updated to 42%." },
-  { id:"al5", action:"deleted", entity:"resource", entityId:"old_r1", entityName:"Concrete Mixer #3", performedBy:"Marcus Chen", timestamp:"Jun 19, 2026 10:47", details:"Resource decommissioned and removed." },
   { id:"al6", action:"created", entity:"report", entityId:"sr1", entityName:"Level 14 rebar issue", performedBy:"Elena Rodriguez", timestamp:"Jun 19, 2026 15:30", details:"Site issue report created." },
   { id:"al7", action:"created", entity:"worker", entityId:"tm11", entityName:"Carlos Mendez", performedBy:"Marcus Chen", timestamp:"Jun 20, 2026 07:12", details:"New electrician added to workforce." },
   { id:"al8", action:"updated", entity:"report", entityId:"sr2", entityName:"Weekly progress update", performedBy:"Sofia Patel", timestamp:"Jun 20, 2026 09:44", details:"Report status changed to resolved." },
