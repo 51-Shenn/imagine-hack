@@ -54,12 +54,12 @@ export function OperationsProvider({ children }: { children: React.ReactNode }) 
 
   const scheduleRefresh = useCallback(() => {
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
-    refreshTimer.current = setTimeout(() => void refresh(), 120);
+    refreshTimer.current = setTimeout(() => void refresh(), 500);
   }, [refresh]);
 
   useEffect(() => {
     const initialRefresh = setTimeout(() => void refresh(), 0);
-    const pollingFallback = setInterval(() => void refresh(), 10_000);
+    const pollingFallback = setInterval(() => void refresh(), 30_000);
     const sb = getSupabaseBrowser();
     if (!sb) return () => { clearTimeout(initialRefresh); clearInterval(pollingFallback); };
     const channel = sb.channel("syncfield-operations");
