@@ -1,9 +1,9 @@
-"use client";
-
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { OrgChart as D3OrgChart } from "d3-org-chart";
-import { Maximize2, Minus, Plus } from "lucide-react";
-import { Button } from "@/components/ui";
+import { select } from "d3-selection";
+import "d3-transition";
+import { IconMaximize, IconMinus, IconPlus } from "@tabler/icons-react";
+import { Button, Input } from "@/components/ui";
 
 export interface OrgChartNode {
   id: string;
@@ -46,6 +46,58 @@ interface OrgChartProps {
 export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<D3OrgChart | null>(null);
+  const expandTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [zoomPercent, setZoomPercent] = useState(100);
+  const [zoomInput, setZoomInput] = useState("100");
+
+  const handleChartZoom = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (event: any) => {
+      const k: number = event?.transform?.k ?? 1;
+      const pct = Math.round(k * 100);
+      setZoomPercent(pct);
+      setZoomInput(String(pct));
+    },
+    []
+  );
+
+  const handleZoomIn = useCallback(() => {
+    if (!chartRef.current) return;
+    chartRef.current.zoomIn();
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    if (!chartRef.current) return;
+    chartRef.current.zoomOut();
+  }, []);
+
+  const handleZoomInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setZoomInput(e.target.value);
+    },
+    []
+  );
+
+  const applyZoomInput = useCallback(() => {
+    if (!chartRef.current) return;
+    const val = parseInt(zoomInput, 10);
+    if (isNaN(val)) {
+      setZoomInput(String(zoomPercent));
+      return;
+    }
+    const clamped = Math.max(10, Math.min(500, val));
+    if (clamped !== val) setZoomInput(String(clamped));
+    const chart = chartRef.current;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const state = chart.getChartState() as any;
+    const targetK = clamped / 100;
+    if (state.svg?.node()) {
+      select(state.svg.node())
+        .transition()
+        .duration(200)
+        .call(state.zoomBehavior.scaleTo, targetK);
+    }
+  }, [zoomInput, zoomPercent]);
 
   const handleNodeClick = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +106,19 @@ export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
     },
     [onNodeClick]
   );
+
+  const handleExpandOrCollapse = useCallback(() => {
+    clearTimeout(expandTimerRef.current);
+    expandTimerRef.current = setTimeout(() => {
+      const chart = chartRef.current;
+      if (!chart) return;
+      const state = chart.getChartState() as any;
+      const k: number = state.lastTransform?.k ?? 1;
+      if (k > 0.9) {
+        chart.zoomOut();
+      }
+    }, 100);
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || data.length === 0) return;
@@ -70,18 +135,27 @@ export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
       .svgHeight(rect.height)
       .nodeWidth(() => 280)
       .nodeHeight(() => 150)
-      .childrenMargin(() => 65)
-      .siblingsMargin(() => 25)
-      .neighbourMargin(() => 35)
-      .compactMarginBetween(() => 25)
+      .childrenMargin(() => 50)
+      .siblingsMargin(() => 30)
+      .neighbourMargin(() => 40)
+      .compactMarginBetween(() => 30)
+      .compactMarginPair(() => 60)
       .compact(true)
       .rootMargin(20)
-      .initialExpandLevel(3)
+      .initialExpandLevel(0)
       .layout("top")
+      .linkYOffset(8)
+      .setActiveNodeCentered(false)
       .scaleExtent([0.1, 5])
+      .nodeButtonWidth(() => 24)
+      .nodeButtonHeight(() => 24)
+      .nodeButtonX(() => -12)
+      .nodeButtonY(() => -12)
       .nodeId((d: any) => d.id)
       .parentNodeId((d: any) => d.parentId)
       .onNodeClick(handleNodeClick)
+      .onExpandOrCollapse(handleExpandOrCollapse)
+      .onZoom(handleChartZoom)
       .nodeContent(function (this: any, d: any) {
         const node = d.data;
         const colorIdx =
@@ -125,11 +199,7 @@ export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
                     : "background:#fef3c7;color:#b45309;"
                 }
               ">${isActive ? "Active" : "On Leave"}</span>
-              ${
-                node._directSubordinates > 0
-                  ? `<span style="font-size:11px;color:#94a3b8;">${node._directSubordinates} direct report${node._directSubordinates !== 1 ? "s" : ""}</span>`
-                  : `<span style="font-size:11px;color:#94a3b8;">${node.email || ""}</span>`
-              }
+              <span style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">${node.email || ""}</span>
             </div>
           </div>
         `;
@@ -149,12 +219,13 @@ export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
           ">${isExpanded ? "−" : "+"}</div>
         `;
       })
-      .linkUpdate(function (this: any, d: any) {
-        this.style.stroke = d.data._upToTheRootHighlighted
-          ? "#f97316"
-          : "#cbd5e1";
-        this.style.strokeWidth = d.data._upToTheRootHighlighted ? "2.5" : "1.5";
-        this.style.fill = "none";
+      .linkUpdate(function (this: SVGPathElement, d: any) {
+        const hl = d.data._upToTheRootHighlighted;
+        this.setAttribute("stroke", hl ? "#f97316" : "#cbd5e1");
+        this.setAttribute("stroke-width", hl ? "2.5" : "1.5");
+        this.setAttribute("fill", "none");
+        this.setAttribute("stroke-linecap", "round");
+        this.setAttribute("opacity", hl ? "1" : "0.7");
       })
       .render();
 
@@ -173,13 +244,14 @@ export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
     ro.observe(container);
 
     return () => {
+      clearTimeout(expandTimerRef.current);
       ro.disconnect();
       if (containerRef.current) {
         containerRef.current.innerHTML = "";
       }
       chartRef.current = null;
     };
-  }, [data, handleNodeClick]);
+  }, [data, handleNodeClick, handleExpandOrCollapse]);
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -224,7 +296,7 @@ export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
           onClick={handleExpandAll}
           title="Expand all"
         >
-          <Plus className="size-3.5" />
+          <IconPlus className="size-3.5" />
           Expand all
         </Button>
         <Button
@@ -233,7 +305,7 @@ export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
           onClick={handleCollapseAll}
           title="Collapse all"
         >
-          <Minus className="size-3.5" />
+          <IconMinus className="size-3.5" />
           Collapse all
         </Button>
         <Button
@@ -242,15 +314,43 @@ export function OrgChart({ data, onNodeClick, searchQuery }: OrgChartProps) {
           onClick={handleFit}
           title="Fit to screen"
         >
-          <Maximize2 className="size-3.5" />
+          <IconMaximize className="size-3.5" />
           Fit
         </Button>
       </div>
-      <div
-        ref={containerRef}
-        className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white"
-        style={{ height: "calc(100vh - 280px)", minHeight: "450px" }}
-      />
+      <div className="relative">
+        <div
+          ref={containerRef}
+          className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white"
+          style={{ height: "calc(100vh - 280px)", minHeight: "450px" }}
+        />
+        <div className="pointer-events-none absolute bottom-3 right-3 z-10 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+          <button
+            onClick={handleZoomOut}
+            className="pointer-events-auto flex size-6 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            title="Zoom out"
+          >
+            <IconMinus className="size-3.5" />
+          </button>
+          <div className="flex items-center gap-0.5">
+            <Input
+              value={zoomInput}
+              onChange={handleZoomInputChange}
+              onBlur={applyZoomInput}
+              onKeyDown={e => { if (e.key === "Enter") applyZoomInput(); }}
+              className="pointer-events-auto h-7 w-12 rounded border-slate-200 px-1 text-center text-xs font-medium tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+            <span className="text-xs text-slate-400">%</span>
+          </div>
+          <button
+            onClick={handleZoomIn}
+            className="pointer-events-auto flex size-6 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            title="Zoom in"
+          >
+            <IconPlus className="size-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

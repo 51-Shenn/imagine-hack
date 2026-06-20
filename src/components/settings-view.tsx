@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, LoaderCircle, ShieldCheck } from "lucide-react";
+import { LoaderCircle, ShieldCheck } from "lucide-react";
+import { IconCheck } from "@tabler/icons-react";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { Avatar, Button, Card, CardContent, Input, Label, Select, Skeleton, Tabs, Textarea } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
@@ -42,13 +43,13 @@ function ProfileSettings({ user }: { user: GoogleUser }) {
       <div><Label>Job title</Label><Input defaultValue="Project Director" /></div>
       <div className="sm:col-span-2"><Label>Bio</Label><Textarea defaultValue="Construction operations leader focused on predictable delivery and collaborative field teams." /></div>
     </div>
-    <div className="mt-6 flex items-center justify-end gap-3">{status === "error" && <p className="text-xs font-medium text-red-600">Could not update your profile.</p>}<Button onClick={saveProfile} disabled={status === "saving"}>{status === "saving" ? <><LoaderCircle className="size-4 animate-spin" />Saving...</> : status === "saved" ? <><Check className="size-4" />Saved</> : "Save changes"}</Button></div>
+    <div className="mt-6 flex items-center justify-end gap-3">{status === "error" && <p className="text-xs font-medium text-red-600">Could not update your profile.</p>}<Button onClick={saveProfile} disabled={status === "saving"}>{status === "saving" ? <><LoaderCircle className="size-4 animate-spin" />Saving...</> : status === "saved" ? <><IconCheck className="size-4" />Saved</> : "Save changes"}</Button></div>
   </CardContent></Card>;
 }
 
 function SaveButton() {
   const [saved, setSaved] = useState(false);
-  return <Button onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 1800); }}>{saved ? <><Check className="size-4" />Saved</> : "Save changes"}</Button>;
+  return <Button onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 1800); }}>{saved ? <><IconCheck className="size-4" />Saved</> : "Save changes"}</Button>;
 }
 
 const company = <Card><CardContent className="max-w-2xl"><div className="grid gap-4 sm:grid-cols-2"><div className="sm:col-span-2"><Label>Company name</Label><Input defaultValue="SyncField Construction Group" /></div><div><Label>Company email</Label><Input defaultValue="operations@syncfield.co" /></div><div><Label>Phone</Label><Input defaultValue="(415) 555-0100" /></div><div className="sm:col-span-2"><Label>Address</Label><Input defaultValue="220 Howard Street, San Francisco, CA 94105" /></div><div><Label>Time zone</Label><Select className="w-full" defaultValue="pacific"><option value="pacific">Pacific Time (PT)</option><option>Mountain Time (MT)</option><option>Central Time (CT)</option></Select></div></div><div className="mt-6 flex justify-end"><SaveButton /></div></CardContent></Card>;
