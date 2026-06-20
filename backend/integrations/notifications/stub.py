@@ -1,4 +1,7 @@
-class StubNotifier:
+from . import Notifier
+
+
+class StubNotifier(Notifier):
     def alert(self, role: str, payload: str) -> None:
         print(f"\U0001f514 NOTIFICATION: Alerting role [{role}] — {payload}")
 
