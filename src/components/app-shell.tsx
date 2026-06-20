@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconBell, IconBriefcase2, IconChevronDown, IconChevronsLeft, IconChevronsRight, IconGasStation, IconLayoutDashboard, IconMenu2, IconDeviceDesktop, IconSearch, IconUsers, IconX } from "@tabler/icons-react";
-import { LogOut, Settings } from "lucide-react";
+import { IconBell, IconBriefcase2, IconChevronDown, IconChevronsLeft, IconChevronsRight, IconGasStation, IconLayoutDashboard, IconLogout, IconMenu2, IconDeviceDesktop, IconSearch, IconSettings, IconUsers, IconX } from "@tabler/icons-react";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { Avatar, Badge, Button, Dialog, Input, Skeleton } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
@@ -52,14 +51,14 @@ function SidebarAccount({ collapsed }: { collapsed: boolean }) {
         {!collapsed && <><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-white">{userName}</p><p className="truncate text-xs text-slate-400">{session.user.email}</p></div><IconChevronDown className="size-4 transition-transform group-open:rotate-180" /></>}
       </summary>
       <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-white/20 bg-slate-900/70 p-1.5 text-sm text-white shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
-        <Link href="/settings" className="flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-white/10"><Settings className="size-4" />Settings</Link>
-        <button onClick={() => setLogoutOpen(true)} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-red-300 hover:bg-white/10 hover:text-red-200"><LogOut className="size-4" />Log out</button>
+        <Link href="/settings" className="flex items-center gap-2.5 rounded-lg px-3 py-2 hover:bg-white/10"><IconSettings className="size-4" />Settings</Link>
+        <button onClick={() => setLogoutOpen(true)} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-red-300 hover:bg-white/10 hover:text-red-200"><IconLogout className="size-4" />Log out</button>
       </div>
     </details>
     <Dialog open={logoutOpen} onOpenChange={setLogoutOpen} title="Log out of SyncField?" description="Are you sure you want to log out of your account?">
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => setLogoutOpen(false)}>Cancel</Button>
-        <Button variant="danger" onClick={handleLogout} disabled={loggingOut}>{loggingOut ? "Logging out..." : <><LogOut className="size-4" />Log out</>}</Button>
+        <Button variant="danger" onClick={handleLogout} disabled={loggingOut}>{loggingOut ? "Logging out..." : <><IconLogout className="size-4" />Log out</>}</Button>
       </div>
     </Dialog>
   </div>;

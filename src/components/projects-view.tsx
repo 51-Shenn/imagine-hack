@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChartGantt } from "lucide-react";
-import { IconCalendarMonth, IconLayoutGrid, IconList, IconMapPin, IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
+import { IconCalendarMonth, IconChartBar, IconLayoutGrid, IconList, IconMapPin, IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { projects as mockProjects, teamMembers, type Project, auditLogs as initialLogs, type AuditLog } from "@/lib/mock-data";
 import { ProjectCard } from "@/components/page-elements";
 import { Avatar, AvatarStack, Badge, Button, Dialog, Input, Label, Progress, Select, Table, Td, Textarea, Th } from "@/components/ui";
@@ -52,7 +51,7 @@ export function ProjectsView() {
   return <><div className="mb-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center">
     <div className="relative flex-1"><IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search projects, clients, locations..." className="border-0 bg-slate-50 pl-9 focus:bg-white" /></div>
     <Select value={status} onChange={e => setStatus(e.target.value)}><option value="all">All statuses</option><option value="planning">Planning</option><option value="in_progress">In progress</option><option value="on_hold">On hold</option><option value="completed">Completed</option></Select>
-    <div className="flex rounded-lg border border-slate-200 p-1" role="tablist" aria-label="Project views"><Button onClick={() => setView("grid")} variant={view === "grid" ? "secondary" : "ghost"} size="sm" role="tab" aria-selected={view === "grid"}><IconLayoutGrid className="size-4" /><span className="hidden lg:inline">Grid</span></Button><Button onClick={() => setView("table")} variant={view === "table" ? "secondary" : "ghost"} size="sm" role="tab" aria-selected={view === "table"}><IconList className="size-4" /><span className="hidden lg:inline">Table</span></Button><Button onClick={() => setView("timeline")} variant={view === "timeline" ? "secondary" : "ghost"} size="sm" role="tab" aria-selected={view === "timeline"}><ChartGantt className="size-4" />Timeline</Button></div>
+    <div className="flex rounded-lg border border-slate-200 p-1" role="tablist" aria-label="Project views"><Button onClick={() => setView("grid")} variant={view === "grid" ? "secondary" : "ghost"} size="sm" role="tab" aria-selected={view === "grid"}><IconLayoutGrid className="size-4" /><span className="hidden lg:inline">Grid</span></Button><Button onClick={() => setView("table")} variant={view === "table" ? "secondary" : "ghost"} size="sm" role="tab" aria-selected={view === "table"}><IconList className="size-4" /><span className="hidden lg:inline">Table</span></Button><Button onClick={() => setView("timeline")} variant={view === "timeline" ? "secondary" : "ghost"} size="sm" role="tab" aria-selected={view === "timeline"}><IconChartBar className="size-4" />Timeline</Button></div>
     <Dialog open={createOpen} onOpenChange={(open) => { setCreateOpen(open); if (!open) resetForm(); }} trigger={<Button><IconPlus className="size-4" />New project</Button>} title="Create a new project" description="Add the core project details.">
       <ProjectForm form={form} setForm={setForm} onSave={saveProject} onCancel={() => { setCreateOpen(false); resetForm(); }} editing={false} />
     </Dialog>

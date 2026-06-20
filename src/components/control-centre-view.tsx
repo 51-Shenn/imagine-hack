@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { IconCalendarClock, IconClipboardCheck, IconDots, IconAlertTriangle, IconHelmet, IconUsers } from "@tabler/icons-react";
-import { activities, auditLogs as initialLogs, projects, tasks, teamMembers, type AuditLog, type SiteReport } from "@/lib/mock-data";
+import { IconCalendarClock, IconClipboardCheck, IconHelmet, IconDots, IconAlertTriangle, IconUsers } from "@tabler/icons-react";
+import { activities, auditLogs as initialLogs, projects, siteReports, tasks, teamMembers, type AuditLog, type SiteReport } from "@/lib/mock-data";
 import { Avatar, Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, Input, Label, Progress, Select, Textarea } from "@/components/ui";
 import { StatCard } from "@/components/page-elements";
 import { authClient } from "@/lib/auth-client";

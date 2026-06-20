@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LoaderCircle, ShieldCheck } from "lucide-react";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconLoader2, IconShieldCheck } from "@tabler/icons-react";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { Avatar, Button, Card, CardContent, Input, Label, Select, Skeleton, Tabs, Textarea } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
@@ -38,12 +37,12 @@ function ProfileSettings({ user }: { user: GoogleUser }) {
     <div className="grid gap-4 sm:grid-cols-2">
       <div><Label>First name</Label><Input value={firstName} onChange={(event) => setFirstName(event.target.value)} /></div>
       <div><Label>Last name</Label><Input value={lastName} onChange={(event) => setLastName(event.target.value)} /></div>
-      <div className="sm:col-span-2"><Label>Email</Label><div className="relative"><Input type="email" value={user.email} readOnly className="bg-slate-50 pr-32 text-slate-500" /><span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 text-[11px] font-semibold text-emerald-600"><ShieldCheck className="size-3.5" />Google verified</span></div></div>
+      <div className="sm:col-span-2"><Label>Email</Label><div className="relative"><Input type="email" value={user.email} readOnly className="bg-slate-50 pr-32 text-slate-500" /><span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 text-[11px] font-semibold text-emerald-600"><IconShieldCheck className="size-3.5" />Google verified</span></div></div>
       <div><Label>Phone</Label><Input placeholder="Add a phone number" /></div>
       <div><Label>Job title</Label><Input defaultValue="Project Director" /></div>
       <div className="sm:col-span-2"><Label>Bio</Label><Textarea defaultValue="Construction operations leader focused on predictable delivery and collaborative field teams." /></div>
     </div>
-    <div className="mt-6 flex items-center justify-end gap-3">{status === "error" && <p className="text-xs font-medium text-red-600">Could not update your profile.</p>}<Button onClick={saveProfile} disabled={status === "saving"}>{status === "saving" ? <><LoaderCircle className="size-4 animate-spin" />Saving...</> : status === "saved" ? <><IconCheck className="size-4" />Saved</> : "Save changes"}</Button></div>
+    <div className="mt-6 flex items-center justify-end gap-3">{status === "error" && <p className="text-xs font-medium text-red-600">Could not update your profile.</p>}<Button onClick={saveProfile} disabled={status === "saving"}>{status === "saving" ? <><IconLoader2 className="size-4 animate-spin" />Saving...</> : status === "saved" ? <><IconCheck className="size-4" />Saved</> : "Save changes"}</Button></div>
   </CardContent></Card>;
 }
 
