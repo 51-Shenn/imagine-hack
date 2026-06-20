@@ -4,7 +4,8 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
-import { X } from "lucide-react";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { X, ChevronDown, Check } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 
 export function Button({ className, variant = "default", size = "default", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "default" | "outline" | "ghost" | "secondary" | "danger"; size?: "default" | "sm" | "icon" }) {
@@ -33,6 +34,22 @@ export function AvatarStack({ names, limit = 4 }: { names: string[]; limit?: num
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) { return <input {...props} className={cn("h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100", props.className)} />; }
 export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) { return <select {...props} className={cn("h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100", props.className)} />; }
+
+export function Dropdown({ value, onValueChange, children, ...props }: { value: string; onValueChange: (value: string) => void; children: React.ReactNode } & Omit<React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>, "value" | "onValueChange">) {
+  return <SelectPrimitive.Root value={value} onValueChange={onValueChange} {...props}>{children}</SelectPrimitive.Root>;
+}
+export function DropdownTrigger({ className, children, ...props }: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>) {
+  return <SelectPrimitive.Trigger className={cn("flex h-8 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 outline-none hover:border-slate-300 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 data-[placeholder]:text-slate-400 [&>span]:line-clamp-1", className)} {...props}>{children}<SelectPrimitive.Icon asChild><ChevronDown className="size-3.5 shrink-0 text-slate-400" /></SelectPrimitive.Icon></SelectPrimitive.Trigger>;
+}
+export function DropdownValue({ placeholder, ...props }: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value>) {
+  return <SelectPrimitive.Value placeholder={placeholder} {...props} />;
+}
+export function DropdownContent({ children, ...props }: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>) {
+  return <SelectPrimitive.Portal><SelectPrimitive.Content position="popper" sideOffset={4} className="z-50 max-h-56 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" {...props}>{children}</SelectPrimitive.Content></SelectPrimitive.Portal>;
+}
+export function DropdownItem({ value, children, ...props }: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & { value: string }) {
+  return <SelectPrimitive.Item value={value} className="relative flex cursor-pointer select-none items-center rounded-md px-2 py-1.5 text-xs text-slate-700 outline-none hover:bg-slate-100 data-[highlighted]:bg-orange-50 data-[highlighted]:text-orange-700 focus:bg-slate-100" {...props}><SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText><SelectPrimitive.ItemIndicator className="absolute right-1.5"><Check className="size-3.5 text-orange-600" /></SelectPrimitive.ItemIndicator></SelectPrimitive.Item>;
+}
 export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) { return <textarea {...props} className={cn("min-h-24 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100", props.className)} />; }
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) { return <label className={cn("mb-1.5 block text-xs font-semibold text-slate-700", className)} {...props} />; }
 export function Separator({ className }: { className?: string }) { return <div className={cn("h-px bg-slate-200", className)} />; }
@@ -42,8 +59,34 @@ export function Dialog({ trigger, title, description, children, open, onOpenChan
   return <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>{trigger ? <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger> : null}<DialogPrimitive.Portal><DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-[2px] data-[state=open]:animate-in" /><DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl outline-none"><DialogPrimitive.Title className="text-lg font-semibold text-slate-950">{title}</DialogPrimitive.Title>{description && <DialogPrimitive.Description className="mt-1 text-sm text-slate-500">{description}</DialogPrimitive.Description>}<div className="mt-5">{children}</div><DialogPrimitive.Close className="absolute right-4 top-4 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="size-4" /></DialogPrimitive.Close></DialogPrimitive.Content></DialogPrimitive.Portal></DialogPrimitive.Root>;
 }
 
-export function Tabs({ tabs, defaultValue, className }: { tabs: { value: string; label: string; content: React.ReactNode }[]; defaultValue?: string; className?: string }) {
-  return <TabsPrimitive.Root defaultValue={defaultValue ?? tabs[0]?.value} className={className}><TabsPrimitive.List className="flex w-full gap-1 overflow-x-auto border-b border-slate-200">{tabs.map((tab) => <TabsPrimitive.Trigger key={tab.value} value={tab.value} className="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-500 outline-none transition-colors hover:text-slate-900 data-[state=active]:border-orange-500 data-[state=active]:text-slate-950">{tab.label}</TabsPrimitive.Trigger>)}</TabsPrimitive.List>{tabs.map((tab) => <TabsPrimitive.Content key={tab.value} value={tab.value} className="mt-5 outline-none">{tab.content}</TabsPrimitive.Content>)}</TabsPrimitive.Root>;
+export function Tabs({ tabs, defaultValue, className, useHash }: { tabs: { value: string; label: string; content: React.ReactNode }[]; defaultValue?: string; className?: string; useHash?: boolean }) {
+  const [value, setValue] = React.useState(defaultValue ?? tabs[0]?.value);
+
+  React.useEffect(() => {
+    if (!useHash) return;
+    const sync = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash && tabs.some((t) => t.value === hash)) setValue(hash);
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    window.addEventListener("popstate", sync);
+    return () => {
+      window.removeEventListener("hashchange", sync);
+      window.removeEventListener("popstate", sync);
+    };
+  }, [useHash, tabs]);
+
+  const onValueChange = (v: string) => {
+    if (useHash) {
+      setValue(v);
+      window.history.replaceState(null, "", `#${v}`);
+    }
+  };
+
+  return useHash
+    ? <TabsPrimitive.Root value={value} onValueChange={onValueChange} className={className}><TabsPrimitive.List className="flex w-full gap-1 overflow-x-auto border-b border-slate-200">{tabs.map((tab) => <TabsPrimitive.Trigger key={tab.value} value={tab.value} className="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-500 outline-none transition-colors hover:text-slate-900 data-[state=active]:border-orange-500 data-[state=active]:text-slate-950">{tab.label}</TabsPrimitive.Trigger>)}</TabsPrimitive.List>{tabs.map((tab) => <TabsPrimitive.Content key={tab.value} value={tab.value} className="mt-5 outline-none">{tab.content}</TabsPrimitive.Content>)}</TabsPrimitive.Root>
+    : <TabsPrimitive.Root defaultValue={defaultValue ?? tabs[0]?.value} className={className}><TabsPrimitive.List className="flex w-full gap-1 overflow-x-auto border-b border-slate-200">{tabs.map((tab) => <TabsPrimitive.Trigger key={tab.value} value={tab.value} className="shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-500 outline-none transition-colors hover:text-slate-900 data-[state=active]:border-orange-500 data-[state=active]:text-slate-950">{tab.label}</TabsPrimitive.Trigger>)}</TabsPrimitive.List>{tabs.map((tab) => <TabsPrimitive.Content key={tab.value} value={tab.value} className="mt-5 outline-none">{tab.content}</TabsPrimitive.Content>)}</TabsPrimitive.Root>;
 }
 
 export function Table({ children, className }: { children: React.ReactNode; className?: string }) { return <div className="w-full overflow-x-auto"><table className={cn("w-full min-w-[720px] text-left text-sm", className)}>{children}</table></div>; }
