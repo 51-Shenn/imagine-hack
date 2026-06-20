@@ -3,7 +3,7 @@ import threading
 from datetime import datetime
 from uuid import uuid4
 
-from backend.workflow.dag_engine.dag_engine import SyncFieldDAG
+from backend.workflow.dag_engine.dag_engine import SyncFieldDAG, VALID_STATES
 from backend.workflow.template_guesser import TemplateGuesser
 
 
@@ -123,11 +123,16 @@ class CommandProcessor:
 
         if command_type == "task.create":
             new_id = task_id or f"T_{uuid4().hex[:10].upper()}"
+            initial_state = payload.get("state") or "LOCKED"
+            if initial_state not in VALID_STATES:
+                raise ValueError(f"Invalid state: {initial_state}")
             self.sb.table("tasks").insert({
                 "id": new_id,
                 "project_id": project_id,
                 "task_name": payload.get("title") or "Untitled task",
-                "state": payload.get("state") or "LOCKED",
+                "state": initial_state,
+                "manual_lock": initial_state == "LOCKED",
+                "blocked_since": datetime.now().isoformat() if initial_state == "BLOCKED" else None,
                 "dependencies": payload.get("dependencies") or [],
                 "assigned_to": self._valid_assignee(payload.get("assigneeId")),
                 "deadline": payload.get("deadline") or None,

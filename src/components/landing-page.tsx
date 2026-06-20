@@ -81,7 +81,7 @@ function LandingAction({ compact = false }: { compact?: boolean }) {
       onClick={() => setSplashing(true)}
       className={`${compact ? "h-10 px-4 text-sm" : "h-12 px-6"} inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600`}
     >Open workspace <IconArrowRight className="size-4" /></button>
-    {splashing && <SplashScreen href="/control-centre" onDone={() => setSplashing(false)} />}
+    {splashing && <SplashScreen href="/control-centre" />}
   </>;
 
   return <button

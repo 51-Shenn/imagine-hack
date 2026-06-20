@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { SplashScreen } from "@/components/splash-screen";
 
 export default function DashboardPage() {
-  redirect("/control-centre");
+  return <SplashScreen href="/control-centre" />;
 }

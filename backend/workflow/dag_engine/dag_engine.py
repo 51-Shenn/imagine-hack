@@ -333,7 +333,7 @@ class SyncFieldDAG:
             )
 
             if dependencies_met and hooks_passed:
-                if current_state == "LOCKED":
+                if current_state == "LOCKED" and not task.get("manual_lock", False):
                     task["state"] = "READY"
                     changes.append({
                         "task_id": t_id,
@@ -397,6 +397,8 @@ class SyncFieldDAG:
             raise ValueError(f"Illegal manual transition: {old_state} \u2192 {new_state} for task {task_id}")
 
         self.tasks[task_id]["state"] = new_state
+        if old_state == "LOCKED" and new_state == "READY":
+            self.tasks[task_id]["manual_lock"] = False
 
         if new_state == "COMPLETE":
             self.tasks[task_id]["attempt_count"] = 0
@@ -500,6 +502,7 @@ class SyncFieldDAG:
             task_upserts.append({
                 "id": task_id,
                 "state": event["new_state"],
+                "manual_lock": task.get("manual_lock", False),
                 "failure_category": task.get("failure_category"),
                 "attempt_count": task.get("attempt_count", 0),
                 "earliest_start": earliest.isoformat() if earliest else None,

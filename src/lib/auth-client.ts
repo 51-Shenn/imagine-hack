@@ -9,7 +9,7 @@ export const signInSocial = async () => {
 		provider: "google",
 		callbackURL: "/dashboard",
 		errorCallbackURL: "/error",
-		newUserCallbackURL: "/welcome",
+		newUserCallbackURL: "/dashboard",
 		disableRedirect: false,
 	});
 }

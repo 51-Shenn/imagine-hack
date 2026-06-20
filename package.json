@@ -8,6 +8,8 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
+    "verify:task-timing": "node --no-warnings scripts/verify-task-timing.mjs",
+    "verify:command-lifecycle": "node --no-warnings scripts/verify-command-lifecycle.mjs",
     "verify:operations": "node scripts/verify-operations.mjs",
     "run-sql-file": "dotenv -e .env -- npx supabase db query --linked --file",
     "run-sql": "dotenv -e .env -- npx supabase db query --linked",
@@ -54,4 +56,3 @@
     "typescript": "^5"
   }
 }
-
