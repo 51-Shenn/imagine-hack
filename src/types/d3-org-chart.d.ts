@@ -27,13 +27,18 @@ declare module "d3-org-chart" {
     nodeButtonX(fn: (d?: unknown) => number): this;
     nodeButtonY(fn: (d?: unknown) => number): this;
     onNodeClick(fn: (d: unknown) => void): this;
+    onZoom(fn: (event: unknown, node: unknown) => void): this;
+    onExpandOrCollapse(fn: (node: unknown) => void): this;
+    zoomIn(): void;
+    zoomOut(): void;
     nodeContent(fn: (d: unknown) => string): this;
     buttonContent(fn: (opts: { node: unknown; state: unknown }) => string): this;
     linkUpdate(fn: (this: SVGPathElement, d: unknown) => void): this;
     createZoom(fn: (d?: unknown) => unknown): this;
     expandAll(): this;
     collapseAll(): this;
-    fit(): this;
+    fit(opts?: { animate?: boolean; scale?: boolean; nodes?: unknown[]; onCompleted?: () => void }): this;
+    getChartState(): Record<string, unknown>;
     setHighlighted(id: string): this;
     clearHighlighting(): this;
   }

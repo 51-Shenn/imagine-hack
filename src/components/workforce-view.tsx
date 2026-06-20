@@ -223,15 +223,15 @@ export function WorkforceView() {
   }
 
   const statusOptions = [
-    { value: "all", label: "All statuses" },
+    { value: "all", label: "All Statuses" },
     { value: "active", label: "Active" },
     { value: "on_leave", label: "On leave" },
   ];
 
   return (
     <>
-      <div className="mb-5 flex flex-col gap-3">
-        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row">
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -266,6 +266,7 @@ export function WorkforceView() {
               onSave={saveWorker}
               onCancel={resetForm}
               editing={false}
+              projectOptions={projectOptions}
             />
           </Dialog>
         </div>
@@ -275,14 +276,14 @@ export function WorkforceView() {
             options={roleOptions}
             selected={selectedRoles}
             onChange={setSelectedRoles}
-            placeholder="All roles"
+            placeholder="All Roles"
             className="sm:min-w-[180px]"
           />
           <MultiSelect
             options={projectOptions}
             selected={selectedProjects}
             onChange={setSelectedProjects}
-            placeholder="All projects"
+            placeholder="All Projects"
             className="sm:min-w-[200px]"
           />
           <Select
@@ -302,7 +303,7 @@ export function WorkforceView() {
               variant={viewMode === "cards" ? "secondary" : "ghost"}
               size="icon"
               className="size-8"
-              title="Cards view"
+              title="Cards"
             >
               <IconLayoutGrid className="size-6" />
             </Button>
@@ -311,7 +312,7 @@ export function WorkforceView() {
               variant={viewMode === "orgchart" ? "secondary" : "ghost"}
               size="icon"
               className="size-8"
-              title="Org chart view"
+              title="Organization Chart"
             >
               <IconHierarchy className="size-6" />
             </Button>
@@ -405,7 +406,7 @@ export function WorkforceView() {
           setDialogOpen(o);
           if (!o) resetForm();
         }}
-        title="Edit worker profile"
+        title="Edit Worker Profile"
         description="Update worker details."
       >
         <WorkerForm
@@ -413,7 +414,8 @@ export function WorkforceView() {
           setForm={setForm}
           onSave={saveWorker}
           onCancel={resetForm}
-          editing={true}
+          editing={!!editMember}
+          projectOptions={projectOptions}
         />
       </Dialog>
     </>
@@ -426,12 +428,14 @@ function WorkerForm({
   onSave,
   onCancel,
   editing,
+  projectOptions,
 }: {
   form: Omit<TeamMember, "id">;
   setForm: (f: Omit<TeamMember, "id">) => void;
   onSave: () => void;
   onCancel: () => void;
   editing: boolean;
+  projectOptions: { value: string; label: string }[];
 }) {
   return (
     <form
@@ -492,23 +496,13 @@ function WorkerForm({
         </Select>
       </div>
       <div>
-        <Label>Assign to project</Label>
-        <Select
-          value={form.projectIds[0] ?? ""}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              projectIds: e.target.value ? [e.target.value] : [],
-            })
-          }
-        >
-          <option value="">— None —</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </Select>
+        <Label>Assign to project(s)</Label>
+        <MultiSelect
+          options={projectOptions}
+          selected={form.projectIds}
+          onChange={(ids) => setForm({ ...form, projectIds: ids })}
+          placeholder="Select projects..."
+        />
       </div>
       <div className="flex justify-end gap-2">
         <Button variant="outline" type="button" onClick={onCancel}>
