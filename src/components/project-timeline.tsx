@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarRange } from "lucide-react";
+import { IconCalendarMonth } from "@tabler/icons-react";
 import type { Project } from "@/lib/mock-data";
 import { Badge, Card } from "@/components/ui";
 
@@ -23,7 +23,7 @@ function addMonths(date: Date, amount: number) {
 export function ProjectTimeline({ projects }: { projects: Project[] }) {
   const datedProjects = projects.map(project => ({ project, start: parseDate(project.startDate), end: parseDate(project.endDate) })).filter((item): item is { project: Project; start: Date; end: Date } => Boolean(item.start && item.end));
 
-  if (datedProjects.length === 0) return <Card className="flex min-h-72 flex-col items-center justify-center border-dashed p-8 text-center"><CalendarRange className="size-8 text-slate-300" /><p className="mt-3 font-medium text-slate-800">No project dates available</p><p className="mt-1 text-sm text-slate-500">Add start and completion dates to display the timeline.</p></Card>;
+  if (datedProjects.length === 0) return <Card className="flex min-h-72 flex-col items-center justify-center border-dashed p-8 text-center"><IconCalendarMonth className="size-8 text-slate-300" /><p className="mt-3 font-medium text-slate-800">No project dates available</p><p className="mt-1 text-sm text-slate-500">Add start and completion dates to display the timeline.</p></Card>;
 
   const earliest = startOfMonth(new Date(Math.min(...datedProjects.map(item => item.start.getTime()))));
   const latest = startOfMonth(new Date(Math.max(...datedProjects.map(item => item.end.getTime()))));

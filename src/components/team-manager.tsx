@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
 import type { TeamMember } from "@/lib/mock-data";
 import { Avatar, Button, Card, CardContent, Dialog, Dropdown, DropdownContent, DropdownItem, DropdownTrigger, DropdownValue, Input, Label } from "@/components/ui";
 
@@ -62,7 +62,7 @@ export function TeamManager({ initialMembers, allMembers, projectId }: { initial
   return <>
     <div className="mb-4 flex items-center justify-between">
       <p className="text-xs text-slate-500">{members.length} member{members.length !== 1 ? "s" : ""} on this project</p>
-      <Button size="sm" onClick={() => setShowAdd(true)}><Plus className="size-3.5" />Add Member</Button>
+      <Button size="sm" onClick={() => setShowAdd(true)}><IconPlus className="size-3.5" />Add Member</Button>
     </div>
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {members.map(member => (
@@ -75,8 +75,8 @@ export function TeamManager({ initialMembers, allMembers, projectId }: { initial
               <p className="mt-2 truncate text-xs text-slate-400">{member.email}</p>
             </div>
             <div className="flex flex-col gap-1.5 opacity-0 transition group-hover:opacity-100">
-              <button onClick={() => setEditingMember({ ...member })} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"><Pencil className="size-3.5" /></button>
-              <button onClick={() => removeMember(member.id)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="size-3.5" /></button>
+              <button onClick={() => setEditingMember({ ...member })} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"><IconPencil className="size-3.5" /></button>
+              <button onClick={() => removeMember(member.id)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"><IconTrash className="size-3.5" /></button>
             </div>
           </CardContent>
         </Card>
