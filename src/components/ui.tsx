@@ -408,7 +408,8 @@ export function MultiSelect({
           <div
             ref={menuRef}
             role="listbox"
-            className="z-[100] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
+            onPointerDown={(e) => e.stopPropagation()}
+            className="pointer-events-auto z-[100] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
             style={{
               position: "fixed",
               top: coords.top,
