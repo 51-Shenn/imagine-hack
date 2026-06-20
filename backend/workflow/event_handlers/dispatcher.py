@@ -4,16 +4,23 @@ from backend.workflow.dag_engine.dag_engine import FieldOpsDomainRules, DEFAULT_
 
 
 class FieldOpsDispatcher:
-    def __init__(self, engine, solver, notifier, policies=None):
+    def __init__(self, engine, solver, notifier, policies=None, sb_client=None):
         self.engine = engine
         self.solver = solver
         self.notifier = notifier
         self.domain_rules = FieldOpsDomainRules(policies or DEFAULT_POLICIES)
+        self.sb = sb_client
+
+    def _sync(self, events: list) -> None:
+        if self.sb and events:
+            self.engine.sync_to_supabase(events, self.sb)
 
     def process_failure_report(self, task_id: str, failure_type: str, technician_id: str) -> dict:
         decision = self.domain_rules.handle_task_failure(
             self.engine, task_id, failure_type, technician_id
         )
+
+        self._sync(decision.get("_events", []))
 
         if decision["action"] == "RETRY_LOCAL":
             self.notifier.notify(technician_id, decision["msg"])
@@ -80,6 +87,22 @@ class FieldOpsDispatcher:
                 f"You will be notified when status updates."
             )
 
+    def process_start_report(self, task_id: str, technician_id: str) -> dict:
+        events = self.engine.update_task_state(
+            task_id, "ACTIVE", f"LLM: task start reported by {technician_id}"
+        )
+        self._sync(events)
+        self.engine.tasks[task_id]["assigned_to"] = technician_id
+        self.notifier.notify(
+            technician_id,
+            f"Task {task_id} started — marked ACTIVE."
+        )
+        return {
+            "task_id": task_id,
+            "technician_id": technician_id,
+            "events_triggered": len(events),
+        }
+
     def process_completion_report(self, task_id: str, technician_id: str) -> dict:
         """
         Processes a manual or automated task completion. Updates DAG state
@@ -88,6 +111,7 @@ class FieldOpsDispatcher:
         events = self.engine.update_task_state(
             task_id, "COMPLETE", f"Completion reported by {technician_id}"
         )
+        self._sync(events)
 
         unlocked_task_ids = [
             e["task_id"] for e in events
@@ -136,16 +160,17 @@ class FieldOpsDispatcher:
         ]
 
         freed_ids: list = []
+        all_events: list = []
         for task in orphaned:
             t_id = task["task_id"]
             self.engine.tasks[t_id]["assigned_to"] = None
             if task["state"] == "ACTIVE":
-                self.engine.tasks[t_id]["state"] = "READY"
-                self.notifier.notify(
-                    f"task_{t_id}",
-                    f"Task {t_id} demoted from ACTIVE to READY — {technician_id} absent."
+                events = self.engine.update_task_state(
+                    t_id, "READY", f"Demoted from ACTIVE to READY — {technician_id} absent"
                 )
+                all_events.extend(events)
             freed_ids.append(t_id)
+        self._sync(all_events)
 
         all_idle_techs = [
             tech_id for tech_id in self.solver.technicians

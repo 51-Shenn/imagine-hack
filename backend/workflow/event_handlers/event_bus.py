@@ -1,7 +1,6 @@
 # backend/workflow/event_handlers/event_bus.py
 
 import asyncio
-import threading
 from supabase import Client
 from backend.workflow.event_handlers.dispatcher import FieldOpsDispatcher
 
@@ -20,7 +19,8 @@ class SupabaseEventBus:
         self.sb = sb_client
 
     def handle_db_change(self, payload: dict) -> None:
-        record = payload.get("new")
+        # realtime>=2.x wraps the row as payload["data"]["record"]
+        record = payload.get("data", {}).get("record") or payload.get("new")
         if not record:
             return
 
@@ -70,19 +70,23 @@ class RealtimeEventBusListener:
 
     async def start(self) -> None:
         self.channel = self.async_sb.channel("tasks_realtime_sync")
-        self.channel.on(
-            "postgres_changes",
-            {"event": "UPDATE", "schema": "public", "table": "tasks"},
-            self._on_postgres_change,
+        self.channel.on_postgres_changes(
+            "UPDATE",
+            callback=self._on_postgres_change,
+            schema="public",
+            table="tasks",
         )
         await self.channel.subscribe()
         print("[EventBus] Subscribed to Supabase Realtime on table 'tasks'")
 
     def start_sync(self) -> None:
-        loop = asyncio.new_event_loop()
-        t = threading.Thread(target=loop.run_forever, daemon=True)
-        t.start()
-        asyncio.run_coroutine_threadsafe(self.start(), loop)
+        asyncio.create_task(self._start_wrapped())
+
+    async def _start_wrapped(self) -> None:
+        try:
+            await self.start()
+        except Exception as e:
+            print(f"[EventBus] Subscription error: {e}")
 
     async def stop(self) -> None:
         if self.channel:
