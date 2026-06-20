@@ -2,7 +2,8 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 
-let _adminClient: ReturnType<typeof createClient> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _adminClient: any = null;
 
 export function getSupabaseAdmin() {
   if (_adminClient) return _adminClient;
