@@ -27,9 +27,6 @@ function closeOtherDropdowns(keep?: () => void) {
   }
 }
 
-function registerCloser(closer: () => void) {
-  dropdownClosers.add(closer);
-}
 function unregisterCloser(closer: () => void) {
   dropdownClosers.delete(closer);
 }
@@ -469,9 +466,21 @@ export function MultiSelect({
   }, [open]);
 
   useEffect(() => {
-    if (!open || !buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    setCoords({ top: rect.bottom + 6, left: rect.left, width: rect.width });
+    if (!open) return;
+
+    const updatePosition = () => {
+      if (!buttonRef.current) return;
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCoords({ top: rect.bottom + 6, left: rect.left, width: rect.width });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
   }, [open]);
 
   const label =
@@ -494,7 +503,7 @@ export function MultiSelect({
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" data-multiselect-root>
       <button
         ref={buttonRef}
         type="button"
@@ -524,6 +533,7 @@ export function MultiSelect({
           <div
             ref={menuRef}
             role="listbox"
+            data-multiselect-dropdown
             className="z-[9999] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
             style={{
               position: "fixed",
@@ -541,6 +551,7 @@ export function MultiSelect({
                   type="button"
                   role="option"
                   aria-selected={isSelected}
+                  data-multiselect-option
                   className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors duration-100 hover:bg-slate-50"
                   onClick={() =>
                     onChange(
@@ -639,6 +650,7 @@ export function Dialog({
   open,
   onOpenChange,
   onInteractOutside,
+  modal = true,
 }: {
   trigger?: React.ReactNode;
   title: string;
@@ -647,9 +659,10 @@ export function Dialog({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onInteractOutside?: (event: Event) => void;
+  modal?: boolean;
 }) {
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal={modal}>
       {trigger ? (
         <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>
       ) : null}
